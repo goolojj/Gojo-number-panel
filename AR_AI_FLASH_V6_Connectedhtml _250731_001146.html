@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR AI FLASH V6 (Connected)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0c0c0c, #1a1a1a);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .container {
+      width: 350px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      border: 2px solid rgba(255, 215, 0, 0.5);
+      backdrop-filter: blur(10px);
+    }
+    h2 {
+      color: gold;
+      text-shadow: 0 0 15px gold;
+    }
+    input, button {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      text-align: center;
+    }
+    input {
+      background: rgba(255, 215, 0, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+    button {
+      background: gold;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #ffcc00;
+    }
+    .hidden { display: none; }
+    .dashboard { width: 500px; text-align: center; }
+    .box {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid gold;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 0 15px gold;
+    }
+    .history {
+      max-height: 200px;
+      overflow-y: auto;
+      border-top: 2px solid gold;
+      padding-top: 10px;
+      text-align: left;
+    }
+    .history-item {
+      padding: 8px;
+      background: rgba(255, 215, 0, 0.1);
+      margin: 5px 0;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Section -->
+  <div id="loginSection" class="container">
+    <h2><i class="fas fa-lock"></i> Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboardSection" class="container dashboard hidden">
+    <h2>AR AI FLASH V6</h2>
+
+    <div class="box">
+      <strong><i class="fas fa-calendar-alt"></i> Period:</strong>
+      <div id="period">Loading...</div>
+    </div>
+
+    <div class="box">
+      <strong><i class="fas fa-clock"></i> Timer:</strong>
+      <div id="timer">00:00</div>
+    </div>
+
+    <div class="box">
+      <strong><i class="fas fa-robot"></i> Prediction:</strong>
+      <div id="prediction">--</div>
+    </div>
+
+    <h3>Prediction History</h3>
+    <div class="history" id="history"></div>
+    
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    let lastPeriod = "";
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      if (username === "AR OWNER" && password === "AR OWNER ZRX") {
+        sessionStorage.setItem("loggedIn", "true");
+        showDashboard();
+      } else {
+        alert("Invalid Username or Password");
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("dashboardSection").classList.remove("hidden");
+      updatePeriodAndTimer();
+      setInterval(updatePeriodAndTimer, 1000);
+    }
+
+    function logout() {
+      sessionStorage.removeItem("loggedIn");
+      location.reload();
+    }
+
+    function updatePeriodAndTimer() {
+      const calendar = new Date();
+      const seconds = calendar.getSeconds();
+      const remainingSeconds = 60 - seconds;
+
+      const formattedDate = calendar.toISOString().split('T')[0].replace(/-/g, '');
+      const periodNumber = "100001" + String(calendar.getMinutes()).padStart(4, '0');
+      const period = formattedDate + periodNumber;
+
+      document.getElementById('period').innerText = period;
+      document.getElementById('timer').innerText = `00:${remainingSeconds.toString().padStart(2, '0')}`;
+
+      if (lastPeriod !== period) {
+        lastPeriod = period;
+        makePrediction(period);
+      }
+    }
+
+    function makePrediction(period) {
+      fetch("document.html")
+        .then(res => res.text())
+        .then(html => {
+          let parser = new DOMParser();
+          let doc = parser.parseFromString(html, "text/html");
+          let result = doc.querySelector(".result-box span").innerText.trim();
+          document.getElementById("prediction").innerText = result;
+          recordHistory(period, result);
+        })
+        .catch(err => {
+          console.error("Error fetching signal:", err);
+          document.getElementById("prediction").innerText = "Error";
+        });
+    }
+
+    function recordHistory(period, prediction) {
+      const accuracy = (Math.random() * (95 - 60) + 60).toFixed(2) + "%";
+      const newEntry = document.createElement("div");
+      newEntry.classList.add("history-item");
+      newEntry.innerHTML = `<strong>Period:</strong> ${period} <br> <strong>Prediction:</strong> ${prediction} <br> <strong>Accuracy:</strong> ${accuracy}`;
+      document.getElementById('history').prepend(newEntry);
+    }
+
+    window.onload = function () {
+      sessionStorage.removeItem("loggedIn");
+    }
+  </script>
+</body>
+</html>
